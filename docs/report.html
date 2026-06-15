@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark light">
-  <meta name="description" content="api-rest-generator — engineering report. Mid-transition Kotlin → Rust port: 4 SQL dialects × 4 output targets, dual implementations (Kotlin/Gradle original + Rust/Cargo port), parity-tested across a 27,738-line sample DDL corpus. 198 Rust #[test] + 806 Kotlin @Test enforce the matrix.">
+  <meta name="description" content="api-rest-generator — engineering report. Mid-transition Kotlin → Rust port: 4 SQL dialects × 4 output targets, dual implementations (Kotlin/Gradle original + Rust/Cargo port), parity-tested across a 27,738-line sample DDL corpus. 218 Rust #[test] + 806 Kotlin @Test enforce the matrix.">
   <title>api-rest-generator — Engineering Report</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -106,15 +106,15 @@
 
       <h2 class="tutorial-title"><span class="step-hash">&gt;_</span>EXECUTIVE SUMMARY</h2>
       <p class="tutorial-subtitle"><strong>api-rest-generator</strong> is a REST backend code generator. Input is a raw <code>CREATE TABLE</code> dump in any of four SQL dialects (MySQL, PostgreSQL, SQLite, MSSQL). Output is a complete REST surface &mdash; entities, controllers, DAOs / repositories, migrations, and module wiring &mdash; targeting one of four backends (Spring Boot in Java, Kotlin, or Groovy; or Loco in Rust with Axum + SeaORM). Two binaries ship from one crate: <code>api-rest-generator</code> (full multi-target dispatch) and <code>loco-gen</code> (focused Rust-only flag surface, same engine).</p>
-      <p class="tutorial-subtitle"><strong>Status: mid-transition.</strong> The repo currently carries <em>two</em> implementations of the same generator &mdash; the original Kotlin/Gradle pipeline (9,094 LOC) and the Rust/Cargo port (3,799 LOC). Both compile and produce output independently. The Rust port is being grown module-for-module against the Kotlin reference, with a parity test (<code>tests/parity_smoke.rs</code>) that runs both pipelines over shared sample DDLs and diffs the output. When parity holds across the full sample corpus + every dialect &times; target combination, the Kotlin path retires; until then both ship.</p>
+      <p class="tutorial-subtitle"><strong>Status: mid-transition.</strong> The repo currently carries <em>two</em> implementations of the same generator &mdash; the original Kotlin/Gradle pipeline (9,094 LOC) and the Rust/Cargo port (3,956 LOC). Both compile and produce output independently. The Rust port is being grown module-for-module against the Kotlin reference, with a parity test (<code>tests/parity_smoke.rs</code>) that runs both pipelines over shared sample DDLs and diffs the output. When parity holds across the full sample corpus + every dialect &times; target combination, the Kotlin path retires; until then both ship.</p>
 
       <div class="stat-grid">
         <div class="stat-card"><div class="stat-val">4</div><div class="stat-label">SQL dialects</div></div>
         <div class="stat-card"><div class="stat-val accent">4</div><div class="stat-label">Output targets</div></div>
         <div class="stat-card"><div class="stat-val">2</div><div class="stat-label">Binaries</div></div>
-        <div class="stat-card"><div class="stat-val">3,799</div><div class="stat-label">Rust LOC</div></div>
+        <div class="stat-card"><div class="stat-val">3,956</div><div class="stat-label">Rust LOC</div></div>
         <div class="stat-card"><div class="stat-val">9,094</div><div class="stat-label">Kotlin LOC</div></div>
-        <div class="stat-card"><div class="stat-val green">198</div><div class="stat-label">Rust #[test]</div></div>
+        <div class="stat-card"><div class="stat-val green">218</div><div class="stat-label">Rust #[test]</div></div>
         <div class="stat-card"><div class="stat-val green">806</div><div class="stat-label">Kotlin @Test</div></div>
         <div class="stat-card"><div class="stat-val">4</div><div class="stat-label">Sample DDLs</div></div>
         <div class="stat-card"><div class="stat-val accent">27,738</div><div class="stat-label">Sample DDL lines</div></div>
@@ -171,7 +171,7 @@
         </tbody>
       </table>
 
-      <p style="margin-top:0.8rem;">Rust source totals <strong>3,799 LOC</strong> across 11 files; the Kotlin original totals <strong>9,094 LOC</strong> across 17 main files (and a larger test surface). The 2.4&times; line-count ratio reflects Kotlin's reliance on Spring / JPA / Lombok annotations (which expand into JVM bytecode the Rust port doesn't need an annotation framework to produce) and Java-style class boilerplate the Rust port collapses into structs + free functions.</p>
+      <p style="margin-top:0.8rem;">Rust source totals <strong>3,956 LOC</strong> across 11 files; the Kotlin codebase totals <strong>9,094 LOC</strong> across 36 <code>.kt</code> files (8 main + 28 test). The 2.3&times; line-count ratio reflects Kotlin's reliance on Spring / JPA / Lombok annotations (which expand into JVM bytecode the Rust port doesn't need an annotation framework to produce) and Java-style class boilerplate the Rust port collapses into structs + free functions.</p>
 
       <hr class="section-rule">
       <h2 class="tutorial-title"><span class="step-hash">!</span>TEST COVERAGE</h2>
@@ -180,9 +180,9 @@
       <table class="parity-table">
         <thead><tr><th>Suite</th><th>Lives in</th><th class="num">Count</th><th>Scope</th></tr></thead>
         <tbody>
-          <tr><td>Rust unit (<code>#[test]</code> in src/)</td><td><code>src/*.rs</code></td><td class="num">152</td><td>Per-module: parser, normalize, constants, templates, loco, entity, config</td></tr>
-          <tr><td>Rust integration (<code>tests/</code>)</td><td><code>tests/*.rs</code></td><td class="num">46</td><td>End-to-end on sample DDLs, parity vs Kotlin, normalize invariants, Loco smoke</td></tr>
-          <tr><td><strong>Rust total</strong></td><td>&mdash;</td><td class="num"><strong>198</strong></td><td>&mdash;</td></tr>
+          <tr><td>Rust unit (<code>#[test]</code> in src/)</td><td><code>src/*.rs</code></td><td class="num">155</td><td>Per-module: parser, normalize, constants, templates, loco, entity, config</td></tr>
+          <tr><td>Rust integration (<code>tests/</code>)</td><td><code>tests/*.rs</code></td><td class="num">63</td><td>End-to-end on sample DDLs, parity vs Kotlin, normalize invariants, Loco smoke / collisions / edge cases / keyword escape</td></tr>
+          <tr><td><strong>Rust total</strong></td><td>&mdash;</td><td class="num"><strong>218</strong></td><td>&mdash;</td></tr>
           <tr><td>Kotlin @Test</td><td><code>src/test/kotlin/...</code></td><td class="num">806</td><td>Original Kotlin pipeline: unit + template + integration (per README test table: 28+ classes covering parser, type mappers, template engine, full pipelines, cross-DB &times; cross-language matrix)</td></tr>
         </tbody>
       </table>
@@ -195,6 +195,9 @@
           <tr><td><code>tests/parity_smoke.rs</code></td><td>Runs both pipelines (Kotlin via <code>./gradlew run</code>, Rust via <code>cargo run</code>) on the shared fixture set and diffs the output. The transition is "done" when this passes empty across the full sample corpus.</td></tr>
           <tr><td><code>tests/normalize_units.rs</code></td><td>Property-style coverage of the snake_case &harr; PascalCase / camelCase transforms &mdash; the single hottest source of cross-language drift.</td></tr>
           <tr><td><code>tests/loco_smoke.rs</code></td><td>The Rust-native target (<code>loco-gen</code>) end-to-end &mdash; no Kotlin analogue, so parity testing doesn't apply.</td></tr>
+          <tr><td><code>tests/loco_collision_pins.rs</code></td><td>Loco codegen: snake-table collisions, duplicate emission, FK-clobber, and silent-drop edge cases in <code>write_loco_project</code>.</td></tr>
+          <tr><td><code>tests/loco_edge_cases.rs</code></td><td>Loco codegen edge cases on malformed / boundary DDL inputs.</td></tr>
+          <tr><td><code>tests/loco_keyword_escape.rs</code></td><td>Rust-keyword escaping (<code>self</code> / <code>Self</code> / <code>crate</code> / <code>super</code> / <code>r#type</code>) in generated SeaORM field names.</td></tr>
         </tbody>
       </table>
 

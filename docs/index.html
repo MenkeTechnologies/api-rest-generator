@@ -136,7 +136,7 @@
             <span class="sep">/</span>
             <a href="https://docs.rs/api-rest-generator" target="_blank" rel="noopener noreferrer">docs.rs</a>
           </nav>
-          <p class="docs-build-line">api-rest-generator v0.2.0 &middot; Rust 2021 + clap + regex + once_cell &middot; 4 SQL dialects (MySQL / PostgreSQL / SQLite / MSSQL) &middot; 4 output targets (Java / Kotlin / Groovy Spring Boot + Rust/Loco Axum+SeaORM)</p>
+          <p class="docs-build-line">api-rest-generator v0.2.0 &middot; Rust 2021 + clap + regex + once_cell + java-properties &middot; 4 SQL dialects (MySQL / PostgreSQL / SQLite / MSSQL) &middot; 4 output targets (Java / Kotlin / Groovy Spring Boot + Rust/Loco Axum+SeaORM)</p>
           <p class="docs-build-line">2 binaries (<code>api-rest-generator</code> multi-target + <code>loco-gen</code> Rust-only) &middot; mid-transition: original Kotlin/Gradle pipeline still ships alongside the Rust port (parity-tested)</p>
         </div>
         <div class="tutorial-toolbar">
@@ -307,10 +307,13 @@ samples/
 &#9492;&#9472;&#9472; sakila-mysql.sql          #    644 lines
 tests/
 &#9500;&#9472;&#9472; loco_smoke.rs             # Rust/Loco target end-to-end
+&#9500;&#9472;&#9472; loco_collision_pins.rs    # snake-table collisions, duplicate emission, FK-clobber, silent-drop
+&#9500;&#9472;&#9472; loco_edge_cases.rs        # Loco codegen edge cases on boundary DDL inputs
+&#9500;&#9472;&#9472; loco_keyword_escape.rs    # Rust-keyword escaping in generated field names
 &#9500;&#9472;&#9472; normalize_units.rs        # name-normalization invariants
 &#9500;&#9472;&#9472; parity_smoke.rs           # output matches original Kotlin pipeline on shared fixtures
 &#9492;&#9472;&#9472; sample_ddls.rs            # all 4 sample DDLs round-trip cleanly</pre>
-        <p>11 production <code>.rs</code> files (3,799 LOC counting the 2 bin/ entrypoints) currently shadow 17 main Kotlin files (9,094 LOC). The Kotlin path is the parity reference; the Rust port mirrors module-for-module to keep the diff readable during transition.</p>
+        <p>11 production <code>.rs</code> files (3,956 LOC counting the 2 bin/ entrypoints) currently shadow the Kotlin codebase (9,094 LOC across 36 <code>.kt</code> files &mdash; 8 main + 28 test). The Kotlin path is the parity reference; the Rust port mirrors module-for-module to keep the diff readable during transition.</p>
       </section>
 
       <section class="tutorial-section">
