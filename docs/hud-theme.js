@@ -1,17 +1,17 @@
 /**
- * lsofrs docs — theme / CRT / neon / color-scheme toggles.
- * Storage keys live under the `lsofrs-hud-*` namespace so this site
- * doesn't clobber other MenkeTechnologies docs (strykelang, audio_haxor)
- * if they're ever opened from the same origin.
+ * stryke docs — theme / CRT / neon / color-scheme toggles.
+ * Vendored and simplified from audio_haxor/docs/hud-theme.js.
+ * Storage keys live under the `stryke-hud-*` namespace so the two projects
+ * can't clobber each other if ever opened from the same origin.
  */
 (function () {
   'use strict';
 
   var STORAGE = {
-    theme: 'lsofrs-hud-theme',
-    crt: 'lsofrs-hud-crt',
-    neon: 'lsofrs-hud-neon',
-    scheme: 'lsofrs-hud-scheme',
+    theme: 'stryke-hud-theme',
+    crt: 'stryke-hud-crt',
+    neon: 'stryke-hud-neon',
+    scheme: 'stryke-hud-scheme',
   };
 
   var SCHEME_VAR_KEYS = [
