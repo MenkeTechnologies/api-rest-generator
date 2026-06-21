@@ -141,15 +141,48 @@
       <p class="tutorial-subtitle">Real-world reference schemas covering every supported dialect, used as parity-test fixtures and as demo inputs. All four live in <code>samples/</code>.</p>
 
       <table class="parity-table">
-        <thead><tr><th>Sample</th><th>Dialect</th><th>Source</th><th class="num">Lines</th></tr></thead>
+        <thead><tr><th>Sample</th><th>Dialect</th><th>Source</th><th class="num">Tables</th><th class="num">Lines</th></tr></thead>
         <tbody>
-          <tr><td><code>chinook-sqlite.sql</code></td><td>SQLite</td><td>Chinook digital media store reference DB</td><td class="num">15,902</td></tr>
-          <tr><td><code>northwind-mssql.sql</code></td><td>MSSQL</td><td>Microsoft Northwind trading reference DB</td><td class="num">9,350</td></tr>
-          <tr><td><code>pagila-postgresql.sql</code></td><td>PostgreSQL</td><td>Pagila (PG port of Sakila) DVD rental DB</td><td class="num">1,842</td></tr>
-          <tr><td><code>sakila-mysql.sql</code></td><td>MySQL</td><td>Sakila DVD rental sample DB</td><td class="num">644</td></tr>
-          <tr><td colspan="3" style="text-align:right;"><strong>Aggregate corpus</strong></td><td class="num"><strong>27,738</strong></td></tr>
+          <tr><td><code>chinook-sqlite.sql</code></td><td>SQLite</td><td>Chinook digital media store; <code>[bracketed]</code> identifiers + composite PKs</td><td class="num">11</td><td class="num">15,902</td></tr>
+          <tr><td><code>northwind-mssql.sql</code></td><td>MSSQL</td><td>Classic MSSQL; double-quoted identifiers + <code>Order Details</code> space-in-name</td><td class="num">13</td><td class="num">9,350</td></tr>
+          <tr><td><code>pagila-postgresql.sql</code></td><td>PostgreSQL</td><td>Postgres Sakila port; <code>ALTER TABLE ADD PRIMARY KEY</code> style</td><td class="num">22</td><td class="num">1,842</td></tr>
+          <tr><td><code>sakila-mysql.sql</code></td><td>MySQL</td><td>DVD rental store; exercises triggers/views/functions filtering</td><td class="num">16</td><td class="num">644</td></tr>
+          <tr><td colspan="4" style="text-align:right;"><strong>Aggregate corpus</strong></td><td class="num"><strong>27,738</strong></td></tr>
         </tbody>
       </table>
+      <p>Table counts are the README-reported figures for each schema; <code>tests/sample_ddls.rs</code> pins the parse with conservative lower bounds (Sakila &ge;15, Chinook &ge;11, Pagila &ge;15, Northwind &ge;10) plus invariants &mdash; every table gets a PK (synthetic where needed) and no quote/bracket/tab leaks into the parsed identifiers. The Loco toolchain is not required to run this test, so parser/normalizer regressions are caught in CI without installing <code>loco</code>.</p>
+
+      <hr class="section-rule">
+      <h2 class="tutorial-title"><span class="step-hash">%</span>INTERFACE SURFACE</h2>
+      <p class="tutorial-subtitle">Two entry points with two operating models. <code>api-rest-generator</code> is config-driven (no CLI flags &mdash; it reads <code>src/main/resources/config.properties</code> at a hard-coded relative path); <code>loco-gen</code> is flag-driven with <code>new</code> / <code>generate</code> subcommands.</p>
+
+      <h3 style="color:var(--cyan); font-family:'Orbitron',sans-serif; letter-spacing:1.5px; margin-top:1.2rem;">// config.properties (api-rest-generator + Kotlin pipeline)</h3>
+      <table class="parity-table">
+        <thead><tr><th>Key</th><th>Values</th><th>Default</th></tr></thead>
+        <tbody>
+          <tr><td><code>target.folder</code></td><td>any path</td><td><code>build/generated/src/main/&lt;lang&gt;/</code></td></tr>
+          <tr><td><code>target.package</code></td><td><code>com/example/generated</code></td><td><em>(empty)</em></td></tr>
+          <tr><td><code>file.name</code></td><td>e.g. <code>mysql_dump.sql</code></td><td><em>(empty)</em></td></tr>
+          <tr><td><code>target.language</code></td><td><code>java</code> / <code>kotlin</code> / <code>groovy</code> / <code>rust-loco</code> (alias <code>loco</code>)</td><td><code>java</code> (unknown values fall through to java)</td></tr>
+          <tr><td><code>database.type</code></td><td><code>mysql</code> / <code>postgresql</code> / <code>sqlite</code> / <code>mssql</code></td><td><code>mysql</code></td></tr>
+        </tbody>
+      </table>
+
+      <h3 style="color:var(--cyan); font-family:'Orbitron',sans-serif; letter-spacing:1.5px; margin-top:1.2rem;">// loco-gen subcommands + flags (Rust/Loco)</h3>
+      <table class="parity-table">
+        <thead><tr><th>Flag</th><th>Default</th><th>Applies to</th></tr></thead>
+        <tbody>
+          <tr><td><code>--ddl FILE</code> / <code>-d</code></td><td><em>required</em></td><td><code>new</code> + <code>generate</code></td></tr>
+          <tr><td><code>--name NAME</code> / <code>-n</code></td><td><em>required</em></td><td><code>new</code></td></tr>
+          <tr><td><code>--out DIR</code> / <code>-o</code></td><td><code>.</code> (new) / required (generate)</td><td><code>new</code> + <code>generate</code></td></tr>
+          <tr><td><code>--db DIALECT</code></td><td><code>mysql</code></td><td><code>new</code> + <code>generate</code></td></tr>
+          <tr><td><code>--loco-db DB</code></td><td><code>sqlite</code> (or <code>postgres</code>)</td><td><code>new</code></td></tr>
+          <tr><td><code>--wire</code></td><td>off</td><td><code>new</code> + <code>generate</code></td></tr>
+          <tr><td><code>--migrate</code></td><td>off</td><td><code>new</code></td></tr>
+          <tr><td><code>--loco-bin</code></td><td><code>loco</code></td><td><code>new</code></td></tr>
+        </tbody>
+      </table>
+      <p><code>loco-gen new</code> shells out to <code>loco new -n &lt;name&gt; --db &lt;loco-db&gt; --bg none --assets none</code>, then writes entities / controllers / migrations into the scaffold. <code>--wire</code> rewrites an idempotent <code>// BEGIN loco-gen routes</code> block in <code>src/app.rs</code> (one <code>.add_route(crate::controllers::&lt;table&gt;::routes())</code> per entity), preserving scaffold-shipped modules like <code>controllers::home</code>.</p>
 
       <hr class="section-rule">
       <h2 class="tutorial-title"><span class="step-hash">&amp;</span>KOTLIN &rarr; RUST PORT STATUS</h2>
@@ -172,6 +205,40 @@
       </table>
 
       <p style="margin-top:0.8rem;">Rust source totals <strong>3,956 LOC</strong> across 11 files; the Kotlin codebase totals <strong>9,094 LOC</strong> across 36 <code>.kt</code> files (8 main + 28 test). The 2.3&times; line-count ratio reflects Kotlin's reliance on Spring / JPA / Lombok annotations (which expand into JVM bytecode the Rust port doesn't need an annotation framework to produce) and Java-style class boilerplate the Rust port collapses into structs + free functions.</p>
+
+      <hr class="section-rule">
+      <h2 class="tutorial-title"><span class="step-hash">@</span>DIALECT NORMALISATION</h2>
+      <p class="tutorial-subtitle">Each non-MySQL dialect runs a dedicated pre-parse normalizer (<code>src/normalize.rs</code>) so the shared <code>parse_words</code> cascade sees a clean token stream. MySQL needs none &mdash; its <code>CREATE TABLE</code> grammar parses directly.</p>
+      <table class="parity-table">
+        <thead><tr><th>Dialect</th><th>Normalizer</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td>MySQL</td><td>&mdash; (none)</td><td>Backticked identifiers + inline/table-level constraints parse directly.</td></tr>
+          <tr><td>PostgreSQL</td><td><code>normalize_postgresql_words</code></td><td>Handles <code>pg_dump</code> shape: post-table <code>ALTER TABLE ... ADD CONSTRAINT</code> for PK/FK, PG-native type tokens.</td></tr>
+          <tr><td>SQLite</td><td><code>normalize_sqlite_words</code></td><td>Strips <code>IF NOT EXISTS</code> and MSSQL-style <code>[brackets]</code>; drops entire <code>PRAGMA</code> / <code>INSERT</code> / <code>BEGIN</code> / <code>COMMIT</code> / <code>DELETE</code> runs up to the next <code>CREATE</code> / <code>ALTER</code>.</td></tr>
+          <tr><td>MSSQL</td><td><code>normalize_mssql_words</code></td><td>Collapses quoted multi-word identifiers (<code>"Order Details"</code>), strips <code>[...]</code> and <code>"..."</code> escapes, folds <code>(max)</code> out of types, and drops <code>SET</code> / <code>USE</code> / <code>GO</code> / <code>EXEC</code> / <code>PRINT</code> / <code>IF</code> / <code>DROP</code> / <code>INSERT</code> / <code>BEGIN</code> / <code>END</code> control statements.</td></tr>
+        </tbody>
+      </table>
+
+      <hr class="section-rule">
+      <h2 class="tutorial-title"><span class="step-hash">^</span>RUST/LOCO COLTYPE MAPPING</h2>
+      <p class="tutorial-subtitle">The Loco emitter (<code>src/loco.rs</code>) maps SQL tokens to SeaORM Rust types and the matching Loco <code>ColType</code> for the <code>create_table</code> migration.</p>
+      <table class="parity-table">
+        <thead><tr><th>SQL type</th><th>Rust (SeaORM)</th><th>Loco <code>ColType</code></th></tr></thead>
+        <tbody>
+          <tr><td><code>bigint</code>, <code>int8</code>, <code>bigserial</code></td><td><code>i64</code></td><td><code>BigInteger</code></td></tr>
+          <tr><td><code>int</code>, <code>integer</code>, <code>int4</code>, <code>serial</code></td><td><code>i32</code></td><td><code>Integer</code></td></tr>
+          <tr><td><code>smallint</code>, <code>int2</code></td><td><code>i16</code></td><td><code>SmallInteger</code></td></tr>
+          <tr><td><code>varchar</code>, <code>char</code>, <code>text</code>, <code>nvarchar</code></td><td><code>String</code></td><td><code>String</code></td></tr>
+          <tr><td><code>bool</code>, <code>boolean</code>, <code>bit</code></td><td><code>bool</code></td><td><code>Boolean</code></td></tr>
+          <tr><td><code>float</code>, <code>real</code></td><td><code>f32</code></td><td><code>Float</code></td></tr>
+          <tr><td><code>double</code>, <code>decimal</code>, <code>numeric</code>, <code>money</code></td><td><code>f64</code></td><td><code>Double</code></td></tr>
+          <tr><td><code>date</code> / <code>time</code></td><td><code>Date</code> / <code>Time</code></td><td><code>Date</code> / <code>Time</code></td></tr>
+          <tr><td><code>datetime</code>, <code>datetime2</code>, <code>timestamp(tz)</code></td><td><code>DateTimeWithTimeZone</code></td><td><code>TimestampWithTimeZone</code></td></tr>
+          <tr><td><code>blob</code>, <code>bytea</code>, <code>binary</code>, <code>varbinary</code>, <code>image</code></td><td><code>Vec&lt;u8&gt;</code></td><td><code>Blob</code></td></tr>
+          <tr><td>primary key column (any)</td><td><code>i32</code></td><td><code>PkAuto</code></td></tr>
+        </tbody>
+      </table>
+      <p>Reserved Rust keywords (a column named <code>type</code> / <code>match</code> / <code>move</code>) are emitted as raw identifiers (<code>r#type</code>) so the structs compile without losing the original column name in JSON. <code>tests/loco_keyword_escape.rs</code> pins this; <code>tests/loco_collision_pins.rs</code> pins snake-table collisions, duplicate emission, FK-clobber, and silent-drop edge cases in <code>write_loco_project</code>.</p>
 
       <hr class="section-rule">
       <h2 class="tutorial-title"><span class="step-hash">!</span>TEST COVERAGE</h2>

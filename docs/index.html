@@ -163,7 +163,7 @@
 
       <section class="tutorial-section">
         <h2>Quickstart</h2>
-        <p>Install from crates.io or source:</p>
+        <p>Install from crates.io or build the two Rust binaries from source:</p>
 <pre># install
 cargo install api-rest-generator
 
@@ -175,18 +175,31 @@ cargo build --release
 
 # original Kotlin/Gradle pipeline still runs in parallel for parity reference
 ./gradlew build</pre>
-        <p>Point it at a <code>.sql</code> dump and a target language. The Rust binary uses positional + flag args; see <code>--help</code> for the full grammar.</p>
-<pre># JVM targets (Spring Boot — Java / Kotlin / Groovy)
-api-rest-generator --input samples/sakila-mysql.sql --language java   --out generated/
-api-rest-generator --input samples/sakila-mysql.sql --language kotlin --out generated/
-api-rest-generator --input samples/sakila-mysql.sql --language groovy --out generated/
+        <p>There are two entry points with two different operating models:</p>
+        <ul>
+          <li><strong><code>api-rest-generator</code></strong> &mdash; <em>config-driven, no CLI flags.</em> It reads <code>src/main/resources/config.properties</code> (hard-coded relative path), parses the configured dump, and writes the generated tree under <code>target.folder</code>. This is the multi-target binary (Java / Kotlin / Groovy / Rust-Loco).</li>
+          <li><strong><code>loco-gen</code></strong> &mdash; <em>flag-driven, two subcommands</em> (<code>new</code> / <code>generate</code>). Rust/Loco only.</li>
+        </ul>
+        <p>The JVM / config-driven path. Edit <code>src/main/resources/config.properties</code>, then run the binary with <em>no arguments</em>:</p>
+<pre># config.properties — the only knobs the main binary reads
+target.folder=build/generated/
+target.package=com/example/generated
+file.name=mysql_dump.sql
+target.language=java          # java | kotlin | groovy | rust-loco (alias: loco)
+database.type=mysql           # mysql | postgresql | sqlite | mssql
 
-# Rust/Loco target — main binary
-api-rest-generator --input samples/pagila-postgresql.sql --language rust --out my-loco-app/
+# then, with the dump dropped under src/main/resources/:
+cargo run --bin api-rest-generator     # or ./gradlew run for the Kotlin pipeline</pre>
+        <p>The Rust/Loco path via the dedicated CLI (no config file needed):</p>
+<pre># scaffold a fresh Loco project, generate, wire routes, run migrations
+loco-gen new --ddl samples/pagila-postgresql.sql --name myapi \
+             --out . --db postgresql --loco-db sqlite --wire --migrate
 
-# Rust/Loco target — focused binary (smaller flag surface, same engine)
-loco-gen --ddl samples/pagila-postgresql.sql --out my-loco-app/</pre>
-        <p>Full reference: <a href="https://github.com/MenkeTechnologies/api-rest-generator#readme">README</a> (section-by-section walkthrough of every CLI flag, type-mapping rule, and output convention per target).</p>
+# emit into an EXISTING Loco project (no scaffold)
+loco-gen generate --ddl samples/sakila-mysql.sql --out ./myapi --db mysql --wire
+
+cd myapi && cargo loco start    # CRUD endpoints live at /api/{table_plural}/{id}</pre>
+        <p>Full reference: <a href="https://github.com/MenkeTechnologies/api-rest-generator#readme">README</a> (section-by-section walkthrough of every config key, CLI flag, type-mapping rule, and output convention per target).</p>
       </section>
 
       <section class="tutorial-section">
@@ -251,7 +264,7 @@ loco-gen --ddl samples/pagila-postgresql.sql --out my-loco-app/</pre>
 
       <section class="tutorial-section">
         <h2>Type mapping &mdash; abridged</h2>
-        <p>Full per-dialect tables (every SQL type &rarr; every target type) live in the <a href="https://github.com/MenkeTechnologies/api-rest-generator#-type-mapping">README's TYPE MAPPING</a> section. A short read across the most common cases:</p>
+        <p>Full per-dialect tables (every SQL type &rarr; every target type) live in the <a href="https://github.com/MenkeTechnologies/api-rest-generator#-type-mapping">README's TYPE MAPPING</a> section. A short read across the most common cases &mdash; note that <code>bit</code> / <code>boolean</code> map to a real <code>Boolean</code> only on the Kotlin target; Java and Groovy emit <code>String</code> for those, mirroring the parser cascade in <code>parser.rs</code>:</p>
         <table class="matrix-table">
           <thead>
             <tr><th>SQL</th><th>Java</th><th>Kotlin</th><th>Groovy</th><th>Rust (SeaORM)</th></tr>
@@ -259,25 +272,93 @@ loco-gen --ddl samples/pagila-postgresql.sql --out my-loco-app/</pre>
           <tbody>
             <tr><td><code>int</code> / <code>integer</code></td><td><code>Integer</code></td><td><code>Int</code></td><td><code>Integer</code></td><td><code>i32</code></td></tr>
             <tr><td><code>bigint</code></td><td><code>Long</code></td><td><code>Long</code></td><td><code>Long</code></td><td><code>i64</code></td></tr>
-            <tr><td><code>varchar</code> / <code>text</code></td><td><code>String</code></td><td><code>String</code></td><td><code>String</code></td><td><code>String</code></td></tr>
-            <tr><td><code>boolean</code> / <code>bit</code></td><td><code>Boolean</code></td><td><code>Boolean</code></td><td><code>Boolean</code></td><td><code>bool</code></td></tr>
-            <tr><td><code>datetime</code></td><td><code>LocalDate</code></td><td><code>LocalDate</code></td><td><code>LocalDate</code></td><td><code>DateTimeWithTimeZone</code></td></tr>
-            <tr><td><code>timestamp</code></td><td><code>LocalDateTime</code></td><td><code>LocalDateTime</code></td><td><code>LocalDateTime</code></td><td><code>DateTimeWithTimeZone</code></td></tr>
-            <tr><td><code>numeric</code> / <code>money</code></td><td><code>BigDecimal</code></td><td><code>BigDecimal</code></td><td><code>BigDecimal</code></td><td><code>Decimal</code></td></tr>
-            <tr><td><code>uuid</code> / <code>uniqueidentifier</code></td><td><code>UUID</code></td><td><code>UUID</code></td><td><code>UUID</code></td><td><code>Uuid</code></td></tr>
+            <tr><td><code>varchar</code> / <code>text</code> / <code>nvarchar</code></td><td><code>String</code></td><td><code>String</code></td><td><code>String</code></td><td><code>String</code></td></tr>
+            <tr><td><code>boolean</code> / <code>bit</code></td><td><code>String</code></td><td><code>Boolean</code></td><td><code>String</code></td><td><code>bool</code></td></tr>
+            <tr><td><code>float</code> / <code>real</code></td><td><code>Float</code></td><td><code>Float</code></td><td><code>Float</code></td><td><code>f32</code> / <code>f64</code></td></tr>
+            <tr><td><code>double</code> / <code>numeric</code> / <code>money</code></td><td><code>Double</code></td><td><code>Double</code></td><td><code>Double</code></td><td><code>f64</code></td></tr>
+            <tr><td><code>datetime</code> / <code>date</code> (MSSQL)</td><td><code>LocalDate</code></td><td><code>LocalDate</code></td><td><code>LocalDate</code></td><td><code>DateTimeWithTimeZone</code></td></tr>
+            <tr><td><code>timestamp</code> / <code>datetime2</code></td><td><code>LocalDateTime</code></td><td><code>LocalDateTime</code></td><td><code>LocalDateTime</code></td><td><code>DateTimeWithTimeZone</code></td></tr>
+            <tr><td><code>time</code></td><td><code>LocalTime</code></td><td><code>LocalTime</code></td><td><code>LocalTime</code></td><td><code>Time</code></td></tr>
+            <tr><td><code>uniqueidentifier</code> / <code>image</code> / <code>xml</code></td><td><code>String</code></td><td><code>String</code></td><td><code>String</code></td><td><code>String</code></td></tr>
+            <tr><td><code>blob</code> / <code>bytea</code> / <code>binary</code></td><td><code>String</code></td><td><code>String</code></td><td><code>String</code></td><td><code>Vec&lt;u8&gt;</code></td></tr>
           </tbody>
         </table>
-        <p>snake_case tables &rarr; PascalCase entities; column names go camelCase on the JVM, snake_case on Rust. Rust-keyword columns are escaped as raw identifiers (<code>r#type</code>).</p>
+        <p>snake_case tables &rarr; PascalCase entities; column names go camelCase on the JVM, snake_case on Rust. Rust-keyword columns are escaped as raw identifiers (<code>r#type</code>). Primary keys default to <code>Long</code> (JVM) / <code>PkAuto</code> (Loco); foreign keys default to <code>Integer</code> (JVM) / <code>i32</code> (Loco).</p>
       </section>
 
       <section class="tutorial-section">
         <h2>Generated REST shape (per table)</h2>
-<pre>GET    /api/{entity}              # list
-GET    /api/{entity}/{id}         # detail
-POST   /api/{entity}              # create
-PUT    /api/{entity}/{id}         # update
-DELETE /api/{entity}/{id}         # delete</pre>
-        <p>Identical surface across all four targets. JPA repositories on the JVM expose Spring Data &mdash; pagination, sorting, projection &mdash; for free; the Loco target exposes the same shape through SeaORM entities + Axum routes.</p>
+        <p>The two backend families wire slightly different route sets. The JVM Spring Boot targets prefix everything with <code>GlobalConstants.CONTEXT_PATH</code> (<code>/api/v1</code>) and add two collection-level verbs the Loco target does not:</p>
+<pre># JVM (Spring Boot — Java / Kotlin / Groovy) — 7 routes per entity
+GET    /api/v1/{entity}           # list all
+GET    /api/v1/{entity}/{id}      # fetch one
+POST   /api/v1/{entity}           # create
+PUT    /api/v1/{entity}           # update (collection-level @PutMapping)
+DELETE /api/v1/{entity}/{id}      # delete one
+DELETE /api/v1/{entity}           # delete all (collection-level @DeleteMapping)</pre>
+        <p>The Rust/Loco target wires the five id-scoped CRUD routes under a pluralized prefix (<code>.prefix("api/{snake_table_plural}")</code>) &mdash; no collection-level <code>PUT</code> or <code>DELETE</code>:</p>
+<pre># Rust/Loco (Axum + SeaORM) — 5 routes per entity
+GET    /api/{table_plural}        # list all
+POST   /api/{table_plural}        # create (JSON body, PK omitted)
+GET    /api/{table_plural}/{id}   # fetch one
+PUT    /api/{table_plural}/{id}   # update
+DELETE /api/{table_plural}/{id}   # remove</pre>
+        <p>JPA repositories on the JVM extend <code>JpaRepository&lt;T, Long&gt;</code> via Spring Data &mdash; pagination, sorting, projection &mdash; for free; the Loco target exposes its shape through SeaORM entities + Axum handlers (<code>list</code> / <code>get_one</code> / <code>add</code> / <code>update</code> / <code>remove</code>). With <code>--wire</code>, <code>loco-gen</code> patches <code>src/app.rs</code> to register every controller (idempotent <code>// BEGIN loco-gen routes</code> block).</p>
+      </section>
+
+      <section class="tutorial-section">
+        <h2>Configuration &mdash; <code>config.properties</code> (main binary)</h2>
+        <p>The <code>api-rest-generator</code> binary (and the Kotlin <code>./gradlew run</code> pipeline) read exactly five keys from <code>src/main/resources/config.properties</code>. There are no command-line flags; the file is the entire interface.</p>
+        <table class="matrix-table">
+          <thead>
+            <tr><th>Key</th><th>Values</th><th>Default</th><th>Meaning</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>target.folder</code></td><td>any path</td><td><code>build/generated/src/main/&lt;lang&gt;/</code></td><td>Output directory root. When absent, falls back to a language-specific default folder.</td></tr>
+            <tr><td><code>target.package</code></td><td>e.g. <code>com/example/generated</code></td><td><em>(empty)</em></td><td>Java/Kotlin/Groovy package path, used as both the on-disk subtree and the <code>package</code> declaration. Ignored by the Rust/Loco target.</td></tr>
+            <tr><td><code>file.name</code></td><td>e.g. <code>mysql_dump.sql</code></td><td><em>(empty)</em></td><td>DDL source file, resolved against the resources dir (<code>src/main/resources/</code>).</td></tr>
+            <tr><td><code>target.language</code></td><td><code>java</code> / <code>kotlin</code> / <code>groovy</code> / <code>rust-loco</code> (alias <code>loco</code>)</td><td><code>java</code></td><td>Output target. Any unrecognised value (including bare <code>rust</code>) falls through to <code>java</code>.</td></tr>
+            <tr><td><code>database.type</code></td><td><code>mysql</code> / <code>postgresql</code> / <code>sqlite</code> / <code>mssql</code></td><td><code>mysql</code></td><td>Selects the dialect-specific normalizer applied before parsing.</td></tr>
+          </tbody>
+        </table>
+        <p>Generating a dump to feed it: <code>mysqldump --no-data</code> (MySQL), <code>pg_dump --schema-only</code> (PostgreSQL), <code>sqlite3 database.db .dump</code> (SQLite), or SSMS &ldquo;Generate Scripts&rdquo; / <code>sqlcmd</code> (MSSQL).</p>
+      </section>
+
+      <section class="tutorial-section">
+        <h2><code>loco-gen</code> CLI reference (Rust/Loco only)</h2>
+        <p><code>loco-gen</code> is flag-driven with two subcommands. <code>new</code> scaffolds a fresh Loco project (shells out to <code>loco new</code>) then generates into it; <code>generate</code> emits into an existing project without scaffolding.</p>
+        <table class="matrix-table">
+          <thead><tr><th>Subcommand</th><th>What it does</th></tr></thead>
+          <tbody>
+            <tr><td><code>loco-gen new</code></td><td>Runs <code>loco new -n &lt;name&gt; --db &lt;loco-db&gt; --bg none --assets none</code>, parses the DDL, writes all generated files into the new project, and (with <code>--wire</code>) patches <code>src/app.rs</code> to register every controller. With <code>--migrate</code>, runs <code>cargo loco db migrate</code> afterward.</td></tr>
+            <tr><td><code>loco-gen generate</code></td><td>Emits the generated tree into an <strong>existing</strong> Loco project (no scaffold). <code>--wire</code> still patches <code>src/app.rs</code>. Useful for re-running after schema changes.</td></tr>
+          </tbody>
+        </table>
+        <table class="matrix-table">
+          <thead><tr><th>Flag</th><th>Default</th><th>Applies to</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td><code>--ddl FILE</code> / <code>-d</code></td><td><em>required</em></td><td>both</td><td>Path to the SQL dump.</td></tr>
+            <tr><td><code>--name NAME</code> / <code>-n</code></td><td><em>required</em></td><td><code>new</code></td><td>Project / crate name (becomes the new directory name).</td></tr>
+            <tr><td><code>--out DIR</code> / <code>-o</code></td><td><code>.</code> (<code>new</code>); required for <code>generate</code></td><td>both</td><td>Where to create (<code>new</code>) or find (<code>generate</code>) the project.</td></tr>
+            <tr><td><code>--db DIALECT</code></td><td><code>mysql</code></td><td>both</td><td>DDL dialect: <code>mysql</code> / <code>postgresql</code> / <code>sqlite</code> / <code>mssql</code>.</td></tr>
+            <tr><td><code>--loco-db DB</code></td><td><code>sqlite</code></td><td><code>new</code></td><td>Backing DB baked into the new Loco project: <code>sqlite</code> or <code>postgres</code>.</td></tr>
+            <tr><td><code>--wire</code></td><td>off</td><td>both</td><td>Patch <code>src/app.rs</code> to register every generated controller's routes (idempotent &mdash; rewrites the same <code>// BEGIN loco-gen routes</code> block in place).</td></tr>
+            <tr><td><code>--migrate</code></td><td>off</td><td><code>new</code></td><td>Run <code>cargo loco db migrate</code> after generation.</td></tr>
+            <tr><td><code>--loco-bin</code></td><td><code>loco</code></td><td><code>new</code></td><td>Path to the upstream <code>loco</code> CLI binary.</td></tr>
+          </tbody>
+        </table>
+        <p>Prerequisite for <code>new</code>: the upstream Loco CLI (<code>cargo install loco</code>). The route-merge is surgical &mdash; existing modules like <code>controllers::home</code> (shipped by the Loco scaffold) are preserved, and re-running <code>generate --wire</code> after a schema change does not duplicate routes.</p>
+      </section>
+
+      <section class="tutorial-section">
+        <h2>Loco target &mdash; caveats (not yet implemented)</h2>
+        <p>Drawn verbatim from the README's RUST/LOCO TARGET section &mdash; the generated Loco tree is a starting point, not a finished API:</p>
+        <ul>
+          <li><strong>FK relations</strong> are surfaced as plain <code>i32</code> columns; the SeaORM <code>Relation</code> enum is generated empty. Add <code>#[sea_orm(belongs_to = ...)]</code> arms by hand for eager-loading.</li>
+          <li><strong>No unique / nullable / default-value detection</strong> &mdash; every column is non-null in the migration. Tweak <code>ColType::X</code> &rarr; <code>XNull</code> / <code>XUniq</code> / <code>XWithDefault(...)</code> as needed.</li>
+          <li><strong>No pagination, search, or filter endpoints</strong> &mdash; only the five basic CRUD verbs.</li>
+          <li><strong>Composite primary keys</strong> are collapsed to a synthetic <code>id PkAuto</code> column (Loco/SeaORM require a single PK); the original PK columns remain as regular fields.</li>
+        </ul>
       </section>
 
       <section class="tutorial-section">
