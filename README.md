@@ -339,9 +339,9 @@ The integration test [`tests/sample_ddls.rs`](tests/sample_ddls.rs) pins the par
 
 ---
 
-## `> GENERATED ENDPOINTS`
+## `> GENERATED ENDPOINTS` (JVM targets)
 
-Every entity gets a full CRUD interface wired to `/api/v1`:
+Every entity gets a full CRUD interface wired to `/api/v1` (Spring Boot `java`/`kotlin`/`groovy` targets):
 
 ```
 GET     /api/v1/{entity}        // pull all records
@@ -351,6 +351,8 @@ PUT     /api/v1/{entity}        // update
 DELETE  /api/v1/{entity}/{id}   // flatline one
 DELETE  /api/v1/{entity}        // flatline all
 ```
+
+For the `rust-loco` target the generated controller wires only the 5 id-scoped CRUD routes — `GET /`, `POST /`, `GET /{id}`, `PUT /{id}`, `DELETE /{id}` (no collection-level `PUT` or `DELETE`) — see the **RUST/LOCO TARGET** section.
 
 ---
 
