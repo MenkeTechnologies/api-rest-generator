@@ -16,6 +16,8 @@
 <code>// JACK INTO YOUR DATABASE. GENERATE THE BACKEND. OWN THE GRID.</code>
 </p>
 
+### [`Read the Docs`](https://menketechnologies.github.io/api-rest-generator/) &middot; [`Engineering Report`](https://menketechnologies.github.io/api-rest-generator/report.html)
+
 ---
 
 [![CI](https://github.com/MenkeTechnologies/api-rest-generator/actions/workflows/ci.yml/badge.svg)](https://github.com/MenkeTechnologies/api-rest-generator/actions/workflows/ci.yml)
