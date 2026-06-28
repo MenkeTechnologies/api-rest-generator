@@ -79,10 +79,7 @@ fn pg_normalize_is_case_insensitive_on_keywords() {
 fn pg_multiple_folds_in_one_stream() {
     let mut w = words("a character varying(64) b double precision c timestamp without time zone");
     normalize_postgresql_words(&mut w);
-    assert_eq!(
-        w,
-        vec!["a", "varchar(64)", "b", "double", "c", "timestamp"]
-    );
+    assert_eq!(w, vec!["a", "varchar(64)", "b", "double", "c", "timestamp"]);
 }
 
 // ---------------------------------------------------------------- SQLite

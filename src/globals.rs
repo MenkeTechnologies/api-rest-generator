@@ -269,7 +269,10 @@ mod tests {
     #[test]
     fn escape_character_for_postgresql_is_double_quote() {
         with_globals(db("postgresql"), || {
-            assert_eq!(Globals::escape_character(), constants::PG_DB_ESCAPE_CHARACTER);
+            assert_eq!(
+                Globals::escape_character(),
+                constants::PG_DB_ESCAPE_CHARACTER
+            );
             assert_eq!(Globals::escape_character(), "\"");
         });
     }
@@ -278,17 +281,17 @@ mod tests {
     fn escape_character_for_sqlite_is_double_quote() {
         // SQLite shares the PG escape char per the cascade.
         with_globals(db("sqlite"), || {
-            assert_eq!(Globals::escape_character(), constants::PG_DB_ESCAPE_CHARACTER);
+            assert_eq!(
+                Globals::escape_character(),
+                constants::PG_DB_ESCAPE_CHARACTER
+            );
         });
     }
 
     #[test]
     fn escape_character_for_mssql_is_open_bracket() {
         with_globals(db("mssql"), || {
-            assert_eq!(
-                Globals::escape_character(),
-                constants::MSSQL_DB_ESCAPE_OPEN
-            );
+            assert_eq!(Globals::escape_character(), constants::MSSQL_DB_ESCAPE_OPEN);
             assert_eq!(Globals::escape_character(), "[");
         });
     }
@@ -296,10 +299,7 @@ mod tests {
     #[test]
     fn escape_character_for_mysql_default_is_backtick() {
         with_globals(db("mysql"), || {
-            assert_eq!(
-                Globals::escape_character(),
-                constants::DB_ESCAPE_CHARACTER
-            );
+            assert_eq!(Globals::escape_character(), constants::DB_ESCAPE_CHARACTER);
             assert_eq!(Globals::escape_character(), "`");
         });
     }

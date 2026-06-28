@@ -142,12 +142,18 @@ fn rust_type_for_covers_common_sql_types() {
     assert_eq!(loco::rust_type_for(&make(Some("bigint"), None)), "i64");
     assert_eq!(loco::rust_type_for(&make(Some("integer"), None)), "i32");
     assert_eq!(loco::rust_type_for(&make(Some("smallint"), None)), "i16");
-    assert_eq!(loco::rust_type_for(&make(Some("varchar(255)"), None)), "String");
+    assert_eq!(
+        loco::rust_type_for(&make(Some("varchar(255)"), None)),
+        "String"
+    );
     assert_eq!(loco::rust_type_for(&make(Some("text"), None)), "String");
     assert_eq!(loco::rust_type_for(&make(Some("boolean"), None)), "bool");
     assert_eq!(loco::rust_type_for(&make(Some("float"), None)), "f32");
     assert_eq!(loco::rust_type_for(&make(Some("double"), None)), "f64");
-    assert_eq!(loco::rust_type_for(&make(Some("decimal(10,2)"), None)), "f64");
+    assert_eq!(
+        loco::rust_type_for(&make(Some("decimal(10,2)"), None)),
+        "f64"
+    );
     assert_eq!(loco::rust_type_for(&make(Some("date"), None)), "Date");
     assert_eq!(loco::rust_type_for(&make(Some("time"), None)), "Time");
     assert_eq!(

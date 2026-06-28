@@ -160,7 +160,11 @@ fn chrono_like_stamp_emits_well_formed_prefix() {
     // Total length: "m" + 8 (YYYYMMDD) + "_" + 6 (HHMMSS) = 16
     assert_eq!(s.len(), 16, "unexpected stamp length: {s:?}");
     assert!(s.starts_with('m'), "stamp must start with `m`: {s:?}");
-    assert_eq!(&s[9..10], "_", "stamp must have `_` between date and time: {s:?}");
+    assert_eq!(
+        &s[9..10],
+        "_",
+        "stamp must have `_` between date and time: {s:?}"
+    );
     // Every char after `m` and `_` must be a digit.
     let date = &s[1..9];
     let time = &s[10..];

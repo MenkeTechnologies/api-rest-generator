@@ -66,9 +66,21 @@ fn sakila_mysql_parses_and_renders() {
         let c = loco::render_controller(e);
         let m = loco::render_migration(e);
         let ent = loco::render_entity(e);
-        assert!(c.contains("pub struct Params"), "missing Params for {}", e.table_name);
-        assert!(m.contains("create_table"), "missing create_table for {}", e.table_name);
-        assert!(ent.contains("primary_key"), "missing PK for {} (sakila)", e.table_name);
+        assert!(
+            c.contains("pub struct Params"),
+            "missing Params for {}",
+            e.table_name
+        );
+        assert!(
+            m.contains("create_table"),
+            "missing create_table for {}",
+            e.table_name
+        );
+        assert!(
+            ent.contains("primary_key"),
+            "missing PK for {} (sakila)",
+            e.table_name
+        );
     }
 }
 
@@ -93,7 +105,11 @@ fn chinook_sqlite_parses_and_renders() {
             e.table_name
         );
         let c = loco::render_controller(e);
-        assert!(!c.contains('\t'), "tabs leaked into {} columns", e.table_name);
+        assert!(
+            !c.contains('\t'),
+            "tabs leaked into {} columns",
+            e.table_name
+        );
         // Composite PK tables (playlist_track) MUST get a synthetic PK so
         // the SeaORM entity compiles.
         let ent = loco::render_entity(e);
@@ -147,14 +163,20 @@ fn northwind_mssql_parses_and_renders() {
     // "Order Details" must be collapsed into a single identifier so it
     // doesn't collide with "Orders" after pluralisation.
     assert!(
-        table_names.iter().any(|n| n.to_ascii_lowercase().contains("order_details")
-            || n.to_ascii_lowercase().contains("orderdetails")),
+        table_names
+            .iter()
+            .any(|n| n.to_ascii_lowercase().contains("order_details")
+                || n.to_ascii_lowercase().contains("orderdetails")),
         "Order Details table missing, got: {table_names:?}"
     );
     // No leaked quotes / brackets / tabs in any column.
     for e in &entities {
         let c = loco::render_controller(e);
-        assert!(!c.contains('\t'), "tabs leaked into {} columns", e.table_name);
+        assert!(
+            !c.contains('\t'),
+            "tabs leaked into {} columns",
+            e.table_name
+        );
         assert!(
             !c.contains("pub \"") && !c.contains("pub ["),
             "quoted identifier leaked into {} controller",
