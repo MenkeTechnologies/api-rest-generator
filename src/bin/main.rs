@@ -19,7 +19,66 @@ use api_rest_generator::templates::Templates;
 
 const RESOURCES_DIR: &str = "src/main/resources";
 
+/// Print the `--help` / `-h` screen in the MenkeTechnologies house style (see
+/// `tp -h`): ANSI-Shadow banner, a status box padded at runtime so its right
+/// border never drifts as the version grows, yellow `USAGE:`, cyan section
+/// rules, green `//` comment separators, and a SYSTEM footer.
+fn print_help() {
+    const BOX_W: usize = 54;
+    let ver = env!("CARGO_PKG_VERSION");
+    let status = format!(" STATUS: ONLINE  // SIGNAL: ████████░░ // v{ver}");
+    let space = " ".repeat(BOX_W.saturating_sub(status.chars().count()));
+    let rule = "─".repeat(BOX_W);
+    print!(
+        concat!(
+            "\n",
+            "\x1b[36m  █████╗ ██████╗ ██╗██████╗ ███████╗███████╗████████╗\x1b[0m\n",
+            "\x1b[36m ██╔══██╗██╔══██╗██║██╔══██╗██╔════╝██╔════╝╚══██╔══╝\x1b[0m\n",
+            "\x1b[35m ███████║██████╔╝██║██████╔╝█████╗  ███████╗   ██║\x1b[0m\n",
+            "\x1b[35m ██╔══██║██╔═══╝ ██║██╔══██╗██╔══╝  ╚════██║   ██║\x1b[0m\n",
+            "\x1b[31m ██║  ██║██║     ██║██║  ██║███████╗███████║   ██║\x1b[0m\n",
+            "\x1b[31m ╚═╝  ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝╚══════╝   ╚═╝\x1b[0m\n",
+            " \x1b[36m┌{rule}┐\x1b[0m\n",
+            " \x1b[36m│\x1b[0m{status}{space}\x1b[36m│\x1b[0m\n",
+            " \x1b[36m└{rule}┘\x1b[0m\n",
+            "\x1b[35m  >> REST API CODE GENERATOR // FULL SPECTRUM <<\x1b[0m\n",
+            "\n",
+            "  Generate entities / controllers / DAOs / repositories (or a Loco app)\n",
+            "  from a SQL DDL dump, driven by a properties file.\n",
+            "\n",
+            "\x1b[33m  USAGE:\x1b[0m api-rest-generator [OPTIONS]\n",
+            "\n",
+            "\x1b[36m  ── OPTIONS ─────────────────────────────────────────────\x1b[0m\n",
+            "  -h, --help               \x1b[32m//\x1b[0m print this help\n",
+            "  -V, --version            \x1b[32m//\x1b[0m print version\n",
+            "\n",
+            "\x1b[36m  ── CONFIG ──────────────────────────────────────────────\x1b[0m\n",
+            "  src/main/resources/config.properties  \x1b[32m//\x1b[0m generation settings (DDL file, target folder/package, dialect)\n",
+            "\n",
+            "\x1b[36m  ── SYSTEM ──────────────────────────────────────────────\x1b[0m\n",
+            "  \x1b[35mv{ver} \x1b[0m// \x1b[33m(c) Jacob Menke and contributors\x1b[0m\n",
+            "  \x1b[35mThe schema is the spec. The code writes itself.\x1b[0m\n",
+            "  \x1b[33m>>> JACK IN. FEED THE SCHEMA. SHIP THE API. <<<\x1b[0m\n",
+            " \x1b[36m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░\x1b[0m\n",
+        ),
+        rule = rule,
+        status = status,
+        space = space,
+        ver = ver,
+    );
+}
+
 fn main() -> std::io::Result<()> {
+    let args: Vec<String> = std::env::args().skip(1).collect();
+    if args.iter().any(|a| a == "--help" || a == "-h") {
+        print_help();
+        return Ok(());
+    }
+    if args.iter().any(|a| a == "--version" || a == "-V") {
+        println!("api-rest-generator {}", env!("CARGO_PKG_VERSION"));
+        return Ok(());
+    }
+
     let resources = PathBuf::from(RESOURCES_DIR);
     let config_path = resources.join("config.properties");
     let props = Configuration::read_config(&config_path)?;
