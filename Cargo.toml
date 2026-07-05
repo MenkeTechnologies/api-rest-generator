@@ -2,7 +2,7 @@
 name = "api-rest-generator"
 version = "0.2.0"
 edition = "2021"
-authors = ["MenkeTechnologies"]
+authors = ["MenkeTechnologies <linux.dev25@gmail.com>"]
 license = "MIT"
 description = "REST API generator from raw SQL DDL dumps. Targets Spring Boot (Java/Kotlin/Groovy) and Loco (Rust/Axum/SeaORM)"
 repository = "https://github.com/MenkeTechnologies/api-rest-generator"
