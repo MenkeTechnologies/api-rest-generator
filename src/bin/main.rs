@@ -56,7 +56,7 @@ fn print_help() {
             "  src/main/resources/config.properties  \x1b[32m//\x1b[0m generation settings (DDL file, target folder/package, dialect)\n",
             "\n",
             "\x1b[36m  ── SYSTEM ──────────────────────────────────────────────\x1b[0m\n",
-            "  \x1b[35mv{ver} \x1b[0m// \x1b[33m(c) Jacob Menke and contributors\x1b[0m\n",
+            "  \x1b[35mv{ver} \x1b[0m// \x1b[33m(c) MenkeTechnologies\x1b[0m\n",
             "  \x1b[35mThe schema is the spec. The code writes itself.\x1b[0m\n",
             "  \x1b[33m>>> JACK IN. FEED THE SCHEMA. SHIP THE API. <<<\x1b[0m\n",
             " \x1b[36m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░\x1b[0m\n",
