@@ -106,7 +106,7 @@
 
       <h2 class="tutorial-title"><span class="step-hash">&gt;_</span>EXECUTIVE SUMMARY</h2>
       <p class="tutorial-subtitle"><strong>api-rest-generator</strong> is a REST backend code generator. Input is a raw <code>CREATE TABLE</code> dump in any of four SQL dialects (MySQL, PostgreSQL, SQLite, MSSQL). Output is a complete REST surface &mdash; entities, controllers, DAOs / repositories, migrations, and module wiring &mdash; targeting one of four backends (Spring Boot in Java, Kotlin, or Groovy; or Loco in Rust with Axum + SeaORM). Two binaries ship from one crate: <code>api-rest-generator</code> (full multi-target dispatch) and <code>loco-gen</code> (focused Rust-only flag surface, same engine).</p>
-      <p class="tutorial-subtitle"><strong>Status: mid-transition.</strong> The repo currently carries <em>two</em> implementations of the same generator &mdash; the original Kotlin/Gradle pipeline (9,094 LOC) and the Rust/Cargo port (3,956 LOC). Both compile and produce output independently. The Rust port is being grown module-for-module against the Kotlin reference, with a parity test (<code>tests/parity_smoke.rs</code>) that runs both pipelines over shared sample DDLs and diffs the output. When parity holds across the full sample corpus + every dialect &times; target combination, the Kotlin path retires; until then both ship.</p>
+      <p class="tutorial-subtitle"><strong>Status: mid-transition.</strong> The repo currently carries <em>two</em> implementations of the same generator &mdash; the original Kotlin/Gradle pipeline (9,094 LOC) and the Rust/Cargo port (4,013 LOC). Both compile and produce output independently. The Rust port is being grown module-for-module against the Kotlin reference, with a parity test (<code>tests/parity_smoke.rs</code>) that runs both pipelines over shared sample DDLs and diffs the output. When parity holds across the full sample corpus + every dialect &times; target combination, the Kotlin path retires; until then both ship.</p>
 
       <div class="stat-grid">
         <div class="stat-card"><div class="stat-val">4</div><div class="stat-label">SQL dialects</div></div>
@@ -204,7 +204,7 @@
         </tbody>
       </table>
 
-      <p style="margin-top:0.8rem;">Rust source totals <strong>3,956 LOC</strong> across 11 files; the Kotlin codebase totals <strong>9,094 LOC</strong> across 36 <code>.kt</code> files (8 main + 28 test). The 2.3&times; line-count ratio reflects Kotlin's reliance on Spring / JPA / Lombok annotations (which expand into JVM bytecode the Rust port doesn't need an annotation framework to produce) and Java-style class boilerplate the Rust port collapses into structs + free functions.</p>
+      <p style="margin-top:0.8rem;">Rust source totals <strong>4,013 LOC</strong> across 11 files; the Kotlin codebase totals <strong>9,094 LOC</strong> across 36 <code>.kt</code> files (8 main + 28 test). The 2.3&times; line-count ratio reflects Kotlin's reliance on Spring / JPA / Lombok annotations (which expand into JVM bytecode the Rust port doesn't need an annotation framework to produce) and Java-style class boilerplate the Rust port collapses into structs + free functions.</p>
 
       <hr class="section-rule">
       <h2 class="tutorial-title"><span class="step-hash">@</span>DIALECT NORMALISATION</h2>
